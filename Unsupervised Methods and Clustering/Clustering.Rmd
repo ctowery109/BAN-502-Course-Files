@@ -1,0 +1,62 @@
+## Clustering  
+
+Libraries  
+```{r}
+options(tidyverse.quiet=TRUE)
+library(tidyverse)
+library(cluster) #algorithms for clustering
+library(factoextra) #visualization
+
+```
+
+Read in data  
+```{r}
+customers = read_csv("CustomerData.csv")
+str(customers)
+summary(customers)
+```
+
+Preparing the data. Remove missingness (there is none in this data) or impute missing values.  
+
+We also scale the data. This is critical for quantitative data to ensure that no variable (particularly a variable with large values, skews the data and the resulting clusters).  
+```{r}
+customers_scaled = scale(customers) 
+summary(customers_scaled)
+#scale works by calculating the mean and standard deviation of the entire variable, then scales each element by subtracting the mean and dividing by the standard deviation  
+```
+
+Perform k-means clustering with a pre-specified number of clusters. I selected 3 clusters. Note that k-means uses randomness, so we need to use set.seed to ensure same clusters.   
+```{r}
+set.seed(1234)
+clusters1 <- kmeans(customers_scaled, 3)
+clusters1 #don't do this for very large datasets as the cluster for each row is shown
+```
+
+Visualize the clustering  
+```{R}
+fviz_cluster(clusters1, customers_scaled)
+```
+
+Visually identify optimal number of clusters  
+```{r}
+set.seed(123)
+fviz_nbclust(customers_scaled, kmeans, method = "wss") #minimize within-cluster variation
+```
+Another method  
+```{r}
+set.seed(123)
+fviz_nbclust(customers_scaled, kmeans, method = "silhouette") #maximize how well points sit in their clusters
+```
+
+Let's try 5 clusters  
+```{r}
+set.seed(1234)
+clusters2 <- kmeans(customers_scaled, 5)
+clusters2 
+fviz_cluster(clusters2, customers_scaled)
+```
+
+
+
+
+

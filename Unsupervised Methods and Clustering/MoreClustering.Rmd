@@ -1,0 +1,93 @@
+## Clustering  
+
+Libraries  
+```{r}
+options(tidyverse.quiet=TRUE)
+library(tidyverse)
+library(cluster) #algorithms for clustering
+library(factoextra) #visualization
+library(caret) #for the dummyVars function
+```
+
+Read in data  
+```{r}
+beer = read_csv("beers.csv")
+str(beer)
+summary(beer)
+```
+
+Preparing the data. Steps:
+
+1. Use one-hot encoding to convert the category variable (categorical) into dummy variables
+2. Remove missingness or impute missing values
+3. Scale the data
+
+One-hot encoding (using dummyVars function from the caret package) (DO NOT do this on variables with many categories!)
+```{r}
+dummies = data.frame(predict(dummyVars("~category",data=beer),newdata=beer))
+head(dummies)
+```
+Combine 
+```{r}
+beer = bind_cols(beer,dummies)
+str(beer)
+```
+Delete rows with missingness
+```{r}
+beer = beer %>% drop_na()
+summary(beer)
+```
+
+Select relevant variables  
+```{r}
+beer2 = beer %>% select("abv","ibu","categoryOther","categoryPale","categoryFruit")
+str(beer2)
+```
+
+Scale  
+```{r}
+beer_scaled = scale(beer2) 
+summary(beer_scaled)
+```
+
+Perform k-means clustering with a pre-specified number of clusters.   
+```{r}
+set.seed(1234)
+clusters1 = kmeans(beer_scaled, 3)
+```
+
+Visualize the clustering  
+```{R}
+fviz_cluster(clusters1, beer_scaled)
+```
+
+Visually identify optimal number of clusters  
+```{r}
+set.seed(123)
+fviz_nbclust(beer_scaled, kmeans, method = "wss") #minimize within-cluster variation
+```
+Another method  
+```{r}
+set.seed(123)
+fviz_nbclust(beer_scaled, kmeans, method = "silhouette") #maximize how well points sit in their clusters
+```
+
+Let's try 5 clusters  
+```{r}
+set.seed(1234)
+clusters2 = kmeans(beer_scaled, 5)
+fviz_cluster(clusters2, beer_scaled)
+```
+
+Attach cluster to dataset
+```{r}
+cluster = data.frame(clusters2$cluster)
+beer = bind_cols(beer,cluster)
+str(beer)
+```
+
+```{r}
+ggplot(beer, aes(x=abv,y=ibu,color=factor(clusters2.cluster))) + geom_point() + facet_wrap(~factor(category))
+```
+
+
